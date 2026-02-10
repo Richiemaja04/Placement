@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol: Study Roadmap</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 x=%2250%22 font-size=%22100%22 text-anchor=%22middle%22>📟</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-surface: #0f0f12;
+            --bg-card: #16161a;
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #f8ff00;
+            --text-main: #e0e0e0;
+            --text-dim: #88888e;
+            --border-color: #2a2a32;
+            --accent-glow: rgba(0, 243, 255, 0.15);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-cyan) var(--bg-surface);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Scanline Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Header */
+        .app-header {
+            height: 80px;
+            background: var(--bg-surface);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 20;
+        }
+
+        .brand h1 {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .brand p {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-stat-box {
+            text-align: right;
+        }
+
+        .header-stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            display: block;
+        }
+
+        .header-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--neon-magenta);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Layout Grid */
+        .main-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr 380px;
+            gap: 0;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .column:last-child { border-right: none; }
+
+        .column-header {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-header h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Phase Switcher */
+        .phase-nav {
+            display: flex;
+            gap: 2px;
+            background: var(--border-color);
+            padding: 2px;
+            margin: 15px 20px;
+            border-radius: 4px;
+        }
+
+        .phase-toggle {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .phase-toggle.active {
+            background: var(--bg-card);
+            color: var(--neon-cyan);
+            box-shadow: inset 0 0 5px var(--neon-cyan);
+        }
+
+        /* Day Items */
+        .day-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .day-card:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        .day-card.active {
+            border-left: 4px solid var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.08);
+        }
+
+        .day-card.completed {
+            opacity: 0.6;
+        }
+
+        .day-card.completed::after {
+            content: "✓";
+            position: absolute;
+            right: 15px; top: 15px;
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .day-card-meta {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 5px;
+        }
+
+        .day-card-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Study Plan Display */
+        .session-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .session-id {
+            color: var(--neon-magenta);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .session-time-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .session-time {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .session-type-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+        }
+
+        .topic-list {
+            list-style: none;
+        }
+
+        .topic-item {
+            font-size: 0.9rem;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .topic-item::before {
+            content: ">";
+            color: var(--neon-magenta);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Timer & Tools */
+        .timer-module {
+            background: var(--bg-surface);
+            border: 1px solid var(--neon-cyan);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 15px var(--accent-glow);
+            margin-bottom: 25px;
+        }
+
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            color: var(--neon-cyan);
+            margin-bottom: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--text-dim);
+            color: var(--text-main);
+            padding: 8px 15px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .btn-primary {
+            background: var(--neon-cyan);
+            color: var(--bg-deep);
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .progress-widget {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .progress-bar-container {
+            height: 4px;
+            background: var(--bg-deep);
+            width: 100%;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--neon-cyan);
+            width: 0%;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            transition: width 0.5s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .notes-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notes-area {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border-color);
+            color: #0f0; /* Terminal Green */
+            font-family: 'JetBrains Mono', monospace;
+            padding: 15px;
+            font-size: 0.8rem;
+            resize: none;
+            outline: none;
+        }
+
+        .notes-area:focus {
+            border-color: var(--neon-magenta);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+
+        /* Actions */
+        .complete-day-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 15px;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        .reset-trigger {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.6rem;
+            color: #333;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .reset-trigger:hover { color: var(--neon-magenta); }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="brand">
+            <h1>Protocol: Placement Exam</h1>
+        </div>
+
+        <div class="header-stats">
+            <div class="header-stat-box">
+                <span class="header-stat-label">Deadline</span>
+                <span class="header-stat-value" id="countdown">--:--:--</span>
+            </div>
+            <div class="header-stat-box">
+                <span class="header-stat-label">Productivity</span>
+                <span class="header-stat-value" id="streak">00</span>
+            </div>
+            <div class="header-stat-box">
+                <span class="header-stat-label">Total Logs</span>
+                <span class="header-stat-value" id="total-sessions">00</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Navigation -->
+        <aside class="column">
+            <div class="column-header">
+                <h2>Navigation</h2>
+            </div>
+            <div class="phase-nav">
+                <button class="phase-toggle active" id="phase1-btn" onclick="selectPhase(1)">Phase 01</button>
+                <button class="phase-toggle" id="phase2-btn" onclick="selectPhase(2)">Phase 02</button>
+            </div>
+            <div class="scrollable-content" id="day-list">
+                <!-- Days populated by JS -->
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <section class="column">
+            <div class="column-header">
+                <h2 id="current-day-title">Session Details</h2>
+                <div id="day-type-tag" class="day-card-meta">--</div>
+            </div>
+            <div class="scrollable-content" id="study-content">
+                <!-- Content populated by JS -->
+            </div>
+        </section>
+
+        <!-- Utilities -->
+        <section class="column">
+            <div class="column-header">
+                <h2>Terminal Utilities</h2>
+            </div>
+            <div class="scrollable-content">
+                <div class="timer-module">
+                    <div class="timer-display" id="timer-display">25:00</div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="startTimer()">Init</button>
+                        <button class="btn" onclick="stopTimer()">Halt</button>
+                        <button class="btn" onclick="resetTimer()">Reset</button>
+                    </div>
+                    <div class="btn-group" style="margin-bottom: 0;">
+                        <button class="btn" onclick="setTimer(25)" style="font-size: 0.6rem;">25m</button>
+                        <button class="btn" onclick="setTimer(40)" style="font-size: 0.6rem;">40m</button>
+                        <button class="btn" onclick="setTimer(70)" style="font-size: 0.6rem;">70m</button>
+                    </div>
+                </div>
+
+                <div class="progress-widget">
+                    <div class="progress-label">
+                        <span>Phase Progress</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-label" style="margin-top: 10px; color: var(--text-dim); font-size: 0.65rem;">
+                        <span id="days-completed">0 Done</span>
+                        <span id="days-remaining">0 Remaining</span>
+                    </div>
+                </div>
+
+                <div class="notes-container">
+                    <div class="column-header" style="padding: 10px 0; background: none; border: none;">
+                        <h2 style="font-size: 0.7rem;">Session Notes</h2>
+                    </div>
+                    <textarea class="notes-area" id="notes" placeholder="SYSTEM_LOG_INPUT: _"></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <button class="reset-trigger" onclick="resetProgress()">WIPE_STORAGE</button>
+
+    <script>
+        const STUDY_PLAN = {
+            phase1: [
+                { date: 'Feb 10', day: 'Initialization', type: 'study', sessions: [{ time: '8:30 – 9:40', duration: '70 min', type: 'Technical', topics: ['Java Interfaces', 'Exception Handling', 'Collection Framework'] }, { time: '9:40 – 10:20', duration: '40 min', type: 'Coding', topics: ['ArrayList basics', 'LinkedList operations'] }, { time: '10:20 – 11:00', duration: '40 min', type: 'Aptitude', topics: ['Quantitative: Percentages + Ratios'] }] },
+                { date: 'Feb 11', day: 'Logic Depth', type: 'study', sessions: [{ time: '8:30 – 9:40', duration: '70 min', type: 'Technical', topics: ['JDBC basics', 'Thread concepts (life cycle, synchronization)'] }, { time: '9:40 – 10:20', duration: '40 min', type: 'Coding', topics: ['Stack implementation', 'Stack problems (balanced parentheses)'] }, { time: '10:20 – 11:00', duration: '40 min', type: 'Aptitude', topics: ['Logical reasoning (series, patterns)'] }] },
+                { date: 'Feb 12', day: 'Flow Control', type: 'study', sessions: [{ time: '8:30 – 9:40', duration: '70 min', type: 'Technical', topics: ['Stream API', 'Stack vs Queue', 'Important Java 7 features'] }, { time: '9:40 – 10:20', duration: '40 min', type: 'Coding', topics: ['Queue + Stack questions (LeetCode easy level)'] }, { time: '10:20 – 11:00', duration: '40 min', type: 'Aptitude', topics: ['Verbal ability (synonyms, error spotting)'] }] },
+                { date: 'Feb 13', day: 'Cache Revision', type: 'revision', sessions: [{ time: '8:30 – 9:30', duration: '60 min', type: 'Tech Rev', topics: ['Interface', 'Exception', 'Threads', 'Collections'] }, { time: '9:30 – 10:10', duration: '40 min', type: 'Code Rev', topics: ['LinkedList', 'Stack'] }, { time: '10:10 – 11:00', duration: '50 min', type: 'Aptitude Rev', topics: ['Mixed aptitude practice set'] }] },
+                { date: 'Feb 14', day: 'Final Execution', type: 'exam', sessions: [{ time: 'Final Rev', duration: '40 min', type: 'Review', topics: ['Collection hierarchy', 'Thread states', 'Exception types', 'Stack operations'] }] }
+            ],
+            phase2: [
+                { date: 'Feb 15', day: 'Advanced Ingress', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['JDBC deep dive', 'Collections: List, Map, Set'] }, { time: '9:50 – 10:30', duration: '40 min', type: 'Coding', topics: ['List problems', 'Array manipulation'] }, { time: '10:30 – 11:00', duration: '30 min', type: 'Aptitude', topics: ['Time & Work'] }] },
+                { date: 'Feb 16', day: 'Data Structures 01', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['Built-in interfaces', 'Collections advanced'] }, { time: '9:50 – 10:30', duration: '40 min', type: 'Coding', topics: ['List advanced problems'] }, { time: '10:30 – 11:00', duration: '30 min', type: 'Aptitude', topics: ['Profit & Loss'] }] },
+                { date: 'Feb 17', day: 'Optimization', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['Collections revision', 'JDBC practice'] }, { time: '10:30 – 11:00', duration: '30 min', type: 'Aptitude', topics: ['Time & Work advanced'] }] },
+                { date: 'Feb 18', day: 'Network Flow', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['Data Structures overview', 'ArrayList vs LinkedList'] }, { time: '9:50 – 10:30', duration: '40 min', type: 'Coding', topics: ['Array problems (2 pointer)'] }] },
+                { date: 'Feb 19', day: 'System Internals', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['HashMap internal working'] }, { time: '9:50 – 10:30', duration: '40 min', type: 'Coding', topics: ['Prefix sum basics'] }] },
+                { date: 'Feb 20', day: 'Advanced Arrays', type: 'study', sessions: [{ time: '8:30 – 10:30', duration: '120 min', type: 'Technical', topics: ['Data structures practice', 'Array advanced problems'] }] },
+                { date: 'Feb 21', day: 'Multithread Ops', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['Streams advanced', 'Multithreading problems'] }] },
+                { date: 'Feb 22', day: 'Complex Logic', type: 'study', sessions: [{ time: '8:30 – 11:00', duration: '150 min', type: 'Technical', topics: ['Multithreading advanced', 'Complex problems'] }] },
+                { date: 'Feb 23', day: 'System Review', type: 'study', sessions: [{ time: '8:30 – 9:50', duration: '80 min', type: 'Technical', topics: ['Streams revision', 'Thread revision'] }] },
+                { date: 'Feb 24', day: 'Simulation 01', type: 'revision', sessions: [{ time: 'Full Mock', duration: '150 min', type: 'Mock', topics: ['Full revision', 'JDBC flow', 'DS comparisons'] }] },
+                { date: 'Feb 25', day: 'Simulation 02', type: 'revision', sessions: [{ time: 'Full Mock', duration: '150 min', type: 'Mock', topics: ['Complete revision', 'Mock test practice'] }] },
+                { date: 'Feb 26', day: 'Protocol Close', type: 'exam', sessions: [{ time: 'Light Rev', duration: '60 min', type: 'Final', topics: ['Formulas', 'Tricky Java concepts', 'No new topics'] }] }
+            ]
+        };
+
+        let state = {
+            currentPhase: 1,
+            currentDay: 0,
+            completedDays: [],
+            totalMinutes: 0,
+            sessions: 0,
+            notes: '',
+            timerRunning: false,
+            timerMinutes: 25,
+            timerSeconds: 0,
+            timerInterval: null
+        };
+
+        function init() {
+            loadState();
+            updateCountdown();
+            renderDayList();
+            renderStudyContent();
+            updateStats();
+            updateProgress();
+            loadNotes();
+            
+            document.getElementById('notes').addEventListener('input', saveNotes);
+            setInterval(updateCountdown, 60000);
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('study_roadmap_noir');
+            if (saved) state = { ...state, ...JSON.parse(saved) };
+        }
+
+        function saveState() {
+            localStorage.setItem('study_roadmap_noir', JSON.stringify(state));
+        }
+
+        function resetProgress() {
+            if (confirm('ERASE ALL SYSTEM LOGS?')) {
+                localStorage.removeItem('study_roadmap_noir');
+                location.reload();
+            }
+        }
+
+        function selectPhase(phase) {
+            state.currentPhase = phase;
+            state.currentDay = 0;
+            document.getElementById('phase1-btn').classList.toggle('active', phase === 1);
+            document.getElementById('phase2-btn').classList.toggle('active', phase === 2);
+            renderDayList();
+            renderStudyContent();
+            updateProgress();
+            saveState();
+        }
+
+        function updateCountdown() {
+            const examDate = new Date('2026-02-14');
+            const today = new Date();
+            const diffTime = examDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            document.getElementById('countdown').textContent = diffDays > 0 ? `${diffDays}D REMAIN` : "LIVE";
+        }
+
+        function renderDayList() {
+            const plan = state.currentPhase === 1 ? STUDY_PLAN.phase1 : STUDY_PLAN.phase2;
+            const container = document.getElementById('day-list');
+            
+            container.innerHTML = plan.map((day, i) => {
+                const id = `p${state.currentPhase}_d${i}`;
+                const isCompleted = state.completedDays.includes(id);
+                const isActive = state.currentDay === i;
+                
+                return `
+                    <div class="day-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" onclick="selectDay(${i})">
+                        <div class="day-card-meta">${day.date} // ${day.type.toUpperCase()}</div>
+                        <div class="day-card-title">${day.day}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectDay(index) {
+            state.currentDay = index;
+            renderDayList();
+            renderStudyContent();
+            saveState();
+        }
+
+        function renderStudyContent() {
+            const plan = state.currentPhase === 1 ? STUDY_PLAN.phase1 : STUDY_PLAN.phase2;
+            const day = plan[state.currentDay];
+            
+            document.getElementById('current-day-title').textContent = day.day;
+            document.getElementById('day-type-tag').textContent = `PROTOCOL: ${day.type.toUpperCase()} // ${day.date}`;
+            
+            let content = day.sessions.map((s, i) => `
+                <div class="session-block">
+                    <span class="session-id">LOG_SEGMENT_0${i+1}</span>
+                    <div class="session-time-row">
+                        <div class="session-time">${s.time}</div>
+                        <div class="session-type-badge">${s.type}</div>
+                    </div>
+                    <ul class="topic-list">
+                        ${s.topics.map(t => `<li class="topic-item">${t}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+
+            content += `
+                <button class="btn btn-primary complete-day-btn" onclick="markDayComplete()">
+                    EXECUTE_MARK_COMPLETE
+                </button>
+            `;
+            
+            document.getElementById('study-content').innerHTML = content;
+        }
+
+        function markDayComplete() {
+            const dayId = `p${state.currentPhase}_d${state.currentDay}`;
+            if (!state.completedDays.includes(dayId)) {
+                state.completedDays.push(dayId);
+                state.sessions++;
+                confetti({ 
+                    particleCount: 150, 
+                    spread: 70, 
+                    origin: { y: 0.6 }, 
+                    colors: ['#00f3ff', '#ff00ff'] 
+                });
+            }
+            renderDayList();
+            updateStats();
+            updateProgress();
+            saveState();
+        }
+
+        function updateStats() {
+            document.getElementById('total-sessions').textContent = String(state.sessions).padStart(2, '0');
+            document.getElementById('streak').textContent = String(state.completedDays.length).padStart(2, '0');
+        }
+
+        function updateProgress() {
+            const plan = state.currentPhase === 1 ? STUDY_PLAN.phase1 : STUDY_PLAN.phase2;
+            const total = plan.length;
+            const done = state.completedDays.filter(d => d.startsWith(`p${state.currentPhase}`)).length;
+            const perc = Math.round((done / total) * 100);
+            
+            // Corrected ID target for the progress bar
+            const fillElement = document.getElementById('progress-fill');
+            if (fillElement) {
+                fillElement.style.width = perc + '%';
+            }
+            
+            document.getElementById('progress-percent').textContent = perc + '%';
+            document.getElementById('days-completed').textContent = `${done} DONE`;
+            document.getElementById('days-remaining').textContent = `${total - done} REMAINING`;
+        }
+
+        function setTimer(m) { state.timerMinutes = m; state.timerSeconds = 0; updateTimerDisplay(); }
+        function startTimer() {
+            if (state.timerRunning) return;
+            state.timerRunning = true;
+            state.timerInterval = setInterval(() => {
+                if (state.timerSeconds === 0) {
+                    if (state.timerMinutes === 0) { stopTimer(); alert('SESSION_COMPLETE'); return; }
+                    state.timerMinutes--; state.timerSeconds = 59;
+                } else { state.timerSeconds--; }
+                state.totalMinutes++;
+                updateTimerDisplay();
+                saveState();
+            }, 1000);
+        }
+        function stopTimer() { state.timerRunning = false; clearInterval(state.timerInterval); }
+        function resetTimer() { stopTimer(); setTimer(25); }
+        function updateTimerDisplay() {
+            const m = String(state.timerMinutes).padStart(2, '0');
+            const s = String(state.timerSeconds).padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+        }
+
+        function saveNotes() { state.notes = document.getElementById('notes').value; saveState(); }
+        function loadNotes() { document.getElementById('notes').value = state.notes || ''; }
+
+        init();
+    </script>
+</body>
+</html>
